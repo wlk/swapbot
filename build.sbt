@@ -3,12 +3,13 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 import scalariform.formatter.preferences._
 
+enablePlugins(JavaAppPackaging)
 
 name := "swapbot"
 
 version := "1.0"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.11.8"
 
 scalacOptions ++= Seq(
   "-encoding",
@@ -20,6 +21,20 @@ scalacOptions ++= Seq(
   "-deprecation"
 )
 
+resolvers ++= Seq("RoundEights" at "http://maven.spikemark.net/roundeights")
+
+libraryDependencies ++= {
+  val akkaHttpVersion       = "10.0.1"
+
+  Seq(
+    "com.typesafe.akka"    %% "akka-http-core"         % akkaHttpVersion,
+    "com.typesafe.akka"    %% "akka-http"              % akkaHttpVersion,
+    "io.spray"             %% "spray-json"             % "1.3.3",
+    "org.scalatest"        %% "scalatest"              % "3.0.1" % "test"
+  )
+}
+
+
 SbtScalariform.scalariformSettings
 
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
@@ -27,3 +42,5 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(SpacesAroundMultiImports, false)
   .setPreference(CompactControlReadability, false)
+
+lazy val `swapbot` = (project in file(".")).dependsOn(RootProject(file("../bitmarket-scala-client")))

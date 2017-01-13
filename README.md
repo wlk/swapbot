@@ -1,0 +1,3 @@
+# swapbot
+
+A Bitmarket swapbot
