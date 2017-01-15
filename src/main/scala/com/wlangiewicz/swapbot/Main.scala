@@ -18,8 +18,16 @@ object Main extends App {
 
   //println(Await.result(response, 10 seconds))
 
-  val response = client.info
+  val response = client.swapList
   println(Await.result(response, 10 seconds))
+
+  val openResponse = client.swapOpen(1, 6)
+  val opened = Await.result(openResponse, 10 seconds)
+
+  val swapToClose = opened.data.id
+  val closeResponse = client.swapClose(swapToClose)
+  println(Await.result(closeResponse, 10 seconds))
+
 
   system.terminate()
 }
