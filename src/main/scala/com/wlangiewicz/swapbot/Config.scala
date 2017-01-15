@@ -8,4 +8,6 @@ object Config {
   val privateApiKey = config.getString("swapbot.apiKey.private")
 
   val publicApiKey = config.getString("swapbot.apiKey.public")
+
+  val safetyMargin = BigDecimal(config.getString("swapbot.safetyMargin"))
 }
