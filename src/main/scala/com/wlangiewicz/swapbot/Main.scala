@@ -14,9 +14,11 @@ object Main extends App {
 
   val client = new Client(Config.privateApiKey, Config.publicApiKey)
 
-  val response = client.performRequest(client.infoRequest).flatMap(client.unmarshalResponse)
+  //val response = client.performRequest(client.infoRequest).flatMap(client.unmarshalResponse)
 
+  //println(Await.result(response, 10 seconds))
 
+  val response = client.info
   println(Await.result(response, 10 seconds))
 
   system.terminate()
