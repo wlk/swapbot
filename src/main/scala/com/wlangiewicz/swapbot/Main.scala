@@ -16,45 +16,52 @@ object Main extends App {
 
   val client = new Client(privateApiKey, publicApiKey)
 
-  val allSwaps = Await.result(client.swaps, 10 seconds)
+  run()
 
-  val cutoff = allSwaps.cutoff
+  def run() = {
+    val allSwaps = Await.result(client.swaps, 10 seconds)
 
-  val openSwaps = Await.result(client.swapList, 10 seconds)
+    val cutoff = allSwaps.cutoff
 
-  val currentRate: BigDecimal = if (openSwaps.data.nonEmpty) openSwaps.data.map(_.rate).min else 0
+    val openSwaps = Await.result(client.swapList, 10 seconds)
 
-  println(s"Current rate: $currentRate")
+    val currentRate: BigDecimal = if (openSwaps.data.nonEmpty) openSwaps.data.map(_.rate).min else 0
 
-  val expectedRate = cutoff - safetyBuffer(safetyMargin, cutoff)
-  println(s"Expected rate: $expectedRate")
-  println(s"safetyBuffer(safetyMargin, cutoff): ${safetyBuffer(safetyMargin, cutoff)}")
-  println(s"cutoff - safetyBuffer(safetyMargin, cutoff): ${cutoff - safetyBuffer(safetyMargin, cutoff)}")
-  println(s"cutoff - safetyBuffer(safetyMargin, cutoff) * 1.1: ${cutoff - safetyBuffer(safetyMargin, cutoff) * 1.1}")
+    println(s"Current rate: $currentRate")
 
-  if (currentRate < expectedRate - (0.001 * expectedRate) || currentRate < cutoff - (safetyBuffer(safetyMargin, cutoff) * 1.1) || currentRate > cutoff) {
+    val expectedRate = cutoff - safetyBuffer(safetyMargin, cutoff)
+    println(s"Expected rate: $expectedRate")
+    println(s"safetyBuffer(safetyMargin, cutoff): ${safetyBuffer(safetyMargin, cutoff)}")
+    println(s"cutoff - safetyBuffer(safetyMargin, cutoff): ${cutoff - safetyBuffer(safetyMargin, cutoff)}")
+    println(s"cutoff - safetyBuffer(safetyMargin, cutoff) * 1.1: ${cutoff - safetyBuffer(safetyMargin, cutoff) * 1.1}")
 
-    val closeFutures = Future.sequence(openSwaps.data.map(openSwapContract => client.swapClose(openSwapContract.id)))
+    if (shouldUpdateRate(currentRate, expectedRate, cutoff)) {
 
-    val totalFundsTmp = Await.result(closeFutures, 10 seconds).map {
-      d =>
-        Thread.sleep(200)
-        d.data.balances.available.BTC
+      val closeFutures = Future.sequence(openSwaps.data.map(openSwapContract => client.swapClose(openSwapContract.id)))
+
+      val totalFundsTmp = Await.result(closeFutures, 10 seconds).map {
+        d =>
+          Thread.sleep(200)
+          d.data.balances.available.BTC
+      }
+
+      val myTotalFunds = if (totalFundsTmp.nonEmpty) totalFundsTmp.max else Await.result(client.info, 10 seconds).data.balances.available.BTC
+
+      println(s"Total funds: $myTotalFunds")
+
+      client.swapOpen(myTotalFunds, expectedRate.setScale(4, RoundingMode.HALF_EVEN))
+
+      println(s"New Rate: $expectedRate")
+    } else {
+      println(s"No change")
     }
 
-    val myTotalFunds = if (totalFundsTmp.nonEmpty) totalFundsTmp.max else Await.result(client.info, 10 seconds).data.balances.available.BTC
-
-    println(s"Total funds: $myTotalFunds")
-
-    client.swapOpen(myTotalFunds, expectedRate.setScale(4, RoundingMode.HALF_EVEN))
-
-    println(s"New Rate: $expectedRate")
-  } else {
-    println(s"No change")
+    Thread.sleep(500)
   }
 
-  Thread.sleep(500)
-  system.terminate()
+  private def shouldUpdateRate(currentRate: BigDecimal, expectedRate: BigDecimal, cutoff: BigDecimal) = {
+    currentRate < expectedRate - (0.001 * expectedRate) || currentRate < cutoff - (safetyBuffer(safetyMargin, cutoff) * 1.1) || currentRate >= cutoff
+  }
 
   private def safetyBuffer(safetyMargin: BigDecimal, cutoff: BigDecimal): BigDecimal = {
     cutoff * (safetyMargin / 100.0)
