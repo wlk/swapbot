@@ -16,9 +16,16 @@ object Main extends App {
 
   val client = new Client(privateApiKey, publicApiKey)
 
-  run()
+  while (true) {
+    try {
+      run()
+    } catch {
+      case e: Exception => e.printStackTrace
+    }
 
-  def run() = {
+  }
+
+  def run(): Unit = {
     val allSwaps = Await.result(client.swaps, 10 seconds)
 
     val cutoff = allSwaps.cutoff
@@ -56,7 +63,7 @@ object Main extends App {
       println(s"No change")
     }
 
-    Thread.sleep(500)
+    Thread.sleep(5000)
   }
 
   private def shouldUpdateRate(currentRate: BigDecimal, expectedRate: BigDecimal, cutoff: BigDecimal) = {
