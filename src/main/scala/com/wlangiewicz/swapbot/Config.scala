@@ -10,4 +10,6 @@ object Config {
   val publicApiKey = config.getString("swapbot.apiKey.public")
 
   val safetyMargin = BigDecimal(config.getString("swapbot.safetyMargin"))
+
+  val maximumInvestment = BigDecimal(config.getString("swapbot.maximumInvestment"))
 }

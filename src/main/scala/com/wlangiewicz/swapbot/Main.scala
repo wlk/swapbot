@@ -20,9 +20,9 @@ object Main extends App {
     try {
       run()
     } catch {
-      case e: Exception => e.printStackTrace
+      case e: Exception => e.printStackTrace()
     }
-
+    Thread.sleep(5000)
   }
 
   def run(): Unit = {
@@ -54,16 +54,17 @@ object Main extends App {
 
       val myTotalFunds = if (totalFundsTmp.nonEmpty) totalFundsTmp.max else Await.result(client.info, 10 seconds).data.balances.available.BTC
 
-      println(s"Total funds: $myTotalFunds")
+      val toInvest = maximumInvestment.min(myTotalFunds)
 
-      client.swapOpen(myTotalFunds, expectedRate.setScale(4, RoundingMode.HALF_EVEN))
+      println(s"Total funds: $myTotalFunds, investing: $toInvest")
+
+      client.swapOpen(toInvest, expectedRate.setScale(4, RoundingMode.HALF_EVEN))
 
       println(s"New Rate: $expectedRate")
     } else {
       println(s"No change")
     }
 
-    Thread.sleep(5000)
   }
 
   private def shouldUpdateRate(currentRate: BigDecimal, expectedRate: BigDecimal, cutoff: BigDecimal) = {

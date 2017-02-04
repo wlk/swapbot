@@ -4,6 +4,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
 enablePlugins(JavaAppPackaging)
+enablePlugins(NewRelic)
 
 name := "swapbot"
 
@@ -33,7 +34,6 @@ libraryDependencies ++= {
     "org.scalatest"        %% "scalatest"              % "3.0.1" % "test"
   )
 }
-
 
 SbtScalariform.scalariformSettings
 
